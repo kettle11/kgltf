@@ -43,6 +43,64 @@ pub struct GlTf {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for GlTf {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if !self.extensions_used.is_empty() {
+            object.property("extensionsUsed", &self.extensions_used);
+        }
+        if !self.extensions_required.is_empty() {
+            object.property("extensionsRequired", &self.extensions_required);
+        }
+        if !self.accessors.is_empty() {
+            object.property("accessors", &self.accessors);
+        }
+        if !self.animations.is_empty() {
+            object.property("animations", &self.animations);
+        }
+        object.property("asset", &self.asset);
+        if !self.buffers.is_empty() {
+            object.property("buffers", &self.buffers);
+        }
+        if !self.buffer_views.is_empty() {
+            object.property("bufferViews", &self.buffer_views);
+        }
+        if !self.cameras.is_empty() {
+            object.property("cameras", &self.cameras);
+        }
+        if !self.images.is_empty() {
+            object.property("images", &self.images);
+        }
+        if !self.materials.is_empty() {
+            object.property("materials", &self.materials);
+        }
+        if !self.meshes.is_empty() {
+            object.property("meshes", &self.meshes);
+        }
+        if !self.nodes.is_empty() {
+            object.property("nodes", &self.nodes);
+        }
+        if !self.samplers.is_empty() {
+            object.property("samplers", &self.samplers);
+        }
+        if let Some(v) = self.scene.as_ref() {
+            object.property("scene", v);
+        }
+        if !self.scenes.is_empty() {
+            object.property("scenes", &self.scenes);
+        }
+        if !self.skins.is_empty() {
+            object.property("skins", &self.skins);
+        }
+        if !self.textures.is_empty() {
+            object.property("textures", &self.textures);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for GlTf {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -127,6 +185,24 @@ pub struct Texture {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Texture {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.sampler.as_ref() {
+            object.property("sampler", v);
+        }
+        if let Some(v) = self.source.as_ref() {
+            object.property("source", v);
+        }
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Texture {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -169,6 +245,25 @@ pub struct Skin {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Skin {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.inverse_bind_matrices.as_ref() {
+            object.property("inverseBindMatrices", v);
+        }
+        if let Some(v) = self.skeleton.as_ref() {
+            object.property("skeleton", v);
+        }
+        object.property("joints", &self.joints);
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Skin {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -210,6 +305,21 @@ pub struct Scene {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Scene {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if !self.nodes.is_empty() {
+            object.property("nodes", &self.nodes);
+        }
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Scene {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -251,6 +361,30 @@ pub struct Sampler {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Sampler {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.mag_filter.as_ref() {
+            object.property("magFilter", v);
+        }
+        if let Some(v) = self.min_filter.as_ref() {
+            object.property("minFilter", v);
+        }
+        if let Some(v) = self.wrap_s.as_ref() {
+            object.property("wrapS", v);
+        }
+        if let Some(v) = self.wrap_t.as_ref() {
+            object.property("wrapT", v);
+        }
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Sampler {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -292,6 +426,15 @@ pub enum SamplerWrapT {
     Repeat,
 }
 
+impl Serialize for SamplerWrapT {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::ClampToEdge => 33071.serialize(serializer),
+            Self::MirroredRepeat => 33648.serialize(serializer),
+            Self::Repeat => 10497.serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for SamplerWrapT {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.i64()?;
@@ -312,6 +455,15 @@ pub enum SamplerWrapS {
     Repeat,
 }
 
+impl Serialize for SamplerWrapS {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::ClampToEdge => 33071.serialize(serializer),
+            Self::MirroredRepeat => 33648.serialize(serializer),
+            Self::Repeat => 10497.serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for SamplerWrapS {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.i64()?;
@@ -335,6 +487,18 @@ pub enum SamplerMinFilter {
     LinearMipmapLinear,
 }
 
+impl Serialize for SamplerMinFilter {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::Nearest => 9728.serialize(serializer),
+            Self::Linear => 9729.serialize(serializer),
+            Self::NearestMipmapNearest => 9984.serialize(serializer),
+            Self::LinearMipmapNearest => 9985.serialize(serializer),
+            Self::NearestMipmapLinear => 9986.serialize(serializer),
+            Self::LinearMipmapLinear => 9987.serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for SamplerMinFilter {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.i64()?;
@@ -357,6 +521,14 @@ pub enum SamplerMagFilter {
     Linear,
 }
 
+impl Serialize for SamplerMagFilter {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::Nearest => 9728.serialize(serializer),
+            Self::Linear => 9729.serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for SamplerMagFilter {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.i64()?;
@@ -395,6 +567,45 @@ pub struct Node {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Node {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.camera.as_ref() {
+            object.property("camera", v);
+        }
+        if !self.children.is_empty() {
+            object.property("children", &self.children);
+        }
+        if let Some(v) = self.skin.as_ref() {
+            object.property("skin", v);
+        }
+        if let Some(v) = self.matrix.as_ref() {
+            object.property("matrix", v);
+        }
+        if let Some(v) = self.mesh.as_ref() {
+            object.property("mesh", v);
+        }
+        if let Some(v) = self.rotation.as_ref() {
+            object.property("rotation", v);
+        }
+        if let Some(v) = self.scale.as_ref() {
+            object.property("scale", v);
+        }
+        if let Some(v) = self.translation.as_ref() {
+            object.property("translation", v);
+        }
+        if !self.weights.is_empty() {
+            object.property("weights", &self.weights);
+        }
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Node {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -456,6 +667,22 @@ pub struct Mesh {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Mesh {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("primitives", &self.primitives);
+        if !self.weights.is_empty() {
+            object.property("weights", &self.weights);
+        }
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Mesh {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -500,6 +727,28 @@ pub struct MeshPrimitive {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for MeshPrimitive {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("attributes", &self.attributes);
+        if let Some(v) = self.indices.as_ref() {
+            object.property("indices", v);
+        }
+        if let Some(v) = self.material.as_ref() {
+            object.property("material", v);
+        }
+        if let Some(v) = self.mode.as_ref() {
+            object.property("mode", v);
+        }
+        if !self.targets.is_empty() {
+            object.property("targets", &self.targets);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for MeshPrimitive {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -545,6 +794,19 @@ pub enum MeshPrimitiveMode {
     TriangleFan,
 }
 
+impl Serialize for MeshPrimitiveMode {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::Points => 0.serialize(serializer),
+            Self::Lines => 1.serialize(serializer),
+            Self::LineLoop => 2.serialize(serializer),
+            Self::LineStrip => 3.serialize(serializer),
+            Self::Triangles => 4.serialize(serializer),
+            Self::TriangleStrip => 5.serialize(serializer),
+            Self::TriangleFan => 6.serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for MeshPrimitiveMode {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.i64()?;
@@ -586,6 +848,42 @@ pub struct Material {
     pub double_sided: Option<bool>,
 }
 
+impl Serialize for Material {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        if let Some(v) = self.pbr_metallic_roughness.as_ref() {
+            object.property("pbrMetallicRoughness", v);
+        }
+        if let Some(v) = self.normal_texture.as_ref() {
+            object.property("normalTexture", v);
+        }
+        if let Some(v) = self.occlusion_texture.as_ref() {
+            object.property("occlusionTexture", v);
+        }
+        if let Some(v) = self.emissive_texture.as_ref() {
+            object.property("emissiveTexture", v);
+        }
+        if let Some(v) = self.emissive_factor.as_ref() {
+            object.property("emissiveFactor", v);
+        }
+        if let Some(v) = self.alpha_mode.as_ref() {
+            object.property("alphaMode", v);
+        }
+        if let Some(v) = self.alpha_cutoff.as_ref() {
+            object.property("alphaCutoff", v);
+        }
+        if let Some(v) = self.double_sided.as_ref() {
+            object.property("doubleSided", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Material {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -649,6 +947,15 @@ pub enum MaterialAlphaMode {
     Blend,
 }
 
+impl Serialize for MaterialAlphaMode {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::Opaque => "OPAQUE".serialize(serializer),
+            Self::Mask => "MASK".serialize(serializer),
+            Self::Blend => "BLEND".serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for MaterialAlphaMode {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.string()?;
@@ -674,6 +981,22 @@ pub struct MaterialOcclusionTextureInfo {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for MaterialOcclusionTextureInfo {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("index", &self.index);
+        if let Some(v) = self.tex_coord.as_ref() {
+            object.property("texCoord", v);
+        }
+        if let Some(v) = self.strength.as_ref() {
+            object.property("strength", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for MaterialOcclusionTextureInfo {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -714,6 +1037,22 @@ pub struct MaterialNormalTextureInfo {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for MaterialNormalTextureInfo {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("index", &self.index);
+        if let Some(v) = self.tex_coord.as_ref() {
+            object.property("texCoord", v);
+        }
+        if let Some(v) = self.scale.as_ref() {
+            object.property("scale", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for MaterialNormalTextureInfo {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -758,6 +1097,30 @@ pub struct MaterialPbrMetallicRoughness {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for MaterialPbrMetallicRoughness {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.base_color_factor.as_ref() {
+            object.property("baseColorFactor", v);
+        }
+        if let Some(v) = self.base_color_texture.as_ref() {
+            object.property("baseColorTexture", v);
+        }
+        if let Some(v) = self.metallic_factor.as_ref() {
+            object.property("metallicFactor", v);
+        }
+        if let Some(v) = self.roughness_factor.as_ref() {
+            object.property("roughnessFactor", v);
+        }
+        if let Some(v) = self.metallic_roughness_texture.as_ref() {
+            object.property("metallicRoughnessTexture", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for MaterialPbrMetallicRoughness {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -804,6 +1167,19 @@ pub struct TextureInfo {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for TextureInfo {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("index", &self.index);
+        if let Some(v) = self.tex_coord.as_ref() {
+            object.property("texCoord", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for TextureInfo {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -843,6 +1219,27 @@ pub struct Image {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Image {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.uri.as_ref() {
+            object.property("uri", v);
+        }
+        if let Some(v) = self.mime_type.as_ref() {
+            object.property("mimeType", v);
+        }
+        if let Some(v) = self.buffer_view.as_ref() {
+            object.property("bufferView", v);
+        }
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Image {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -880,6 +1277,14 @@ pub enum ImageMimeType {
     ImagePng,
 }
 
+impl Serialize for ImageMimeType {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::ImageJpeg => "image/jpeg".serialize(serializer),
+            Self::ImagePng => "image/png".serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for ImageMimeType {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.string()?;
@@ -906,6 +1311,25 @@ pub struct Camera {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Camera {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.orthographic.as_ref() {
+            object.property("orthographic", v);
+        }
+        if let Some(v) = self.perspective.as_ref() {
+            object.property("perspective", v);
+        }
+        object.property("type", &self.type_);
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Camera {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -943,6 +1367,14 @@ pub enum CameraType {
     Orthographic,
 }
 
+impl Serialize for CameraType {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::Perspective => "perspective".serialize(serializer),
+            Self::Orthographic => "orthographic".serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for CameraType {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.string()?;
@@ -969,6 +1401,23 @@ pub struct CameraPerspective {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for CameraPerspective {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.aspect_ratio.as_ref() {
+            object.property("aspectRatio", v);
+        }
+        object.property("yfov", &self.yfov);
+        if let Some(v) = self.zfar.as_ref() {
+            object.property("zfar", v);
+        }
+        object.property("znear", &self.znear);
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for CameraPerspective {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1014,6 +1463,19 @@ pub struct CameraOrthographic {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for CameraOrthographic {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("xmag", &self.xmag);
+        object.property("ymag", &self.ymag);
+        object.property("zfar", &self.zfar);
+        object.property("znear", &self.znear);
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for CameraOrthographic {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1063,6 +1525,29 @@ pub struct BufferView {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for BufferView {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("buffer", &self.buffer);
+        if let Some(v) = self.byte_offset.as_ref() {
+            object.property("byteOffset", v);
+        }
+        object.property("byteLength", &self.byte_length);
+        if let Some(v) = self.byte_stride.as_ref() {
+            object.property("byteStride", v);
+        }
+        if let Some(v) = self.target.as_ref() {
+            object.property("target", v);
+        }
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for BufferView {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1106,6 +1591,14 @@ pub enum BufferViewTarget {
     ElementArrayBuffer,
 }
 
+impl Serialize for BufferViewTarget {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::ArrayBuffer => 34962.serialize(serializer),
+            Self::ElementArrayBuffer => 34963.serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for BufferViewTarget {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.i64()?;
@@ -1130,6 +1623,22 @@ pub struct Buffer {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Buffer {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.uri.as_ref() {
+            object.property("uri", v);
+        }
+        object.property("byteLength", &self.byte_length);
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Buffer {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1172,6 +1681,25 @@ pub struct Asset {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Asset {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.copyright.as_ref() {
+            object.property("copyright", v);
+        }
+        if let Some(v) = self.generator.as_ref() {
+            object.property("generator", v);
+        }
+        object.property("version", &self.version);
+        if let Some(v) = self.min_version.as_ref() {
+            object.property("minVersion", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Asset {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1215,6 +1743,20 @@ pub struct Animation {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Animation {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("channels", &self.channels);
+        object.property("samplers", &self.samplers);
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Animation {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1255,6 +1797,20 @@ pub struct AnimationSampler {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for AnimationSampler {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("input", &self.input);
+        if let Some(v) = self.interpolation.as_ref() {
+            object.property("interpolation", v);
+        }
+        object.property("output", &self.output);
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for AnimationSampler {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1295,6 +1851,15 @@ pub enum AnimationSamplerInterpolation {
     Cubicspline,
 }
 
+impl Serialize for AnimationSamplerInterpolation {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::Linear => "LINEAR".serialize(serializer),
+            Self::Step => "STEP".serialize(serializer),
+            Self::Cubicspline => "CUBICSPLINE".serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for AnimationSamplerInterpolation {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.string()?;
@@ -1318,6 +1883,17 @@ pub struct AnimationChannel {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for AnimationChannel {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("sampler", &self.sampler);
+        object.property("target", &self.target);
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for AnimationChannel {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1353,6 +1929,19 @@ pub struct AnimationChannelTarget {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for AnimationChannelTarget {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.node.as_ref() {
+            object.property("node", v);
+        }
+        object.property("path", &self.path);
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for AnimationChannelTarget {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1386,6 +1975,16 @@ pub enum AnimationChannelTargetPath {
     Weights,
 }
 
+impl Serialize for AnimationChannelTargetPath {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::Translation => "translation".serialize(serializer),
+            Self::Rotation => "rotation".serialize(serializer),
+            Self::Scale => "scale".serialize(serializer),
+            Self::Weights => "weights".serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for AnimationChannelTargetPath {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.string()?;
@@ -1426,6 +2025,39 @@ pub struct Accessor {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for Accessor {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        if let Some(v) = self.buffer_view.as_ref() {
+            object.property("bufferView", v);
+        }
+        if let Some(v) = self.byte_offset.as_ref() {
+            object.property("byteOffset", v);
+        }
+        object.property("componentType", &self.component_type);
+        if let Some(v) = self.normalized.as_ref() {
+            object.property("normalized", v);
+        }
+        object.property("count", &self.count);
+        object.property("type", &self.type_);
+        if !self.max.is_empty() {
+            object.property("max", &self.max);
+        }
+        if !self.min.is_empty() {
+            object.property("min", &self.min);
+        }
+        if let Some(v) = self.sparse.as_ref() {
+            object.property("sparse", v);
+        }
+        if let Some(v) = self.name.as_ref() {
+            object.property("name", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Accessor {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1489,6 +2121,18 @@ pub struct AccessorSparse {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for AccessorSparse {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("count", &self.count);
+        object.property("indices", &self.indices);
+        object.property("values", &self.values);
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for AccessorSparse {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1527,6 +2171,19 @@ pub struct AccessorSparseValues {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for AccessorSparseValues {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("bufferView", &self.buffer_view);
+        if let Some(v) = self.byte_offset.as_ref() {
+            object.property("byteOffset", v);
+        }
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for AccessorSparseValues {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1564,6 +2221,20 @@ pub struct AccessorSparseIndices {
     pub extensions: Option<Extension>,
 }
 
+impl Serialize for AccessorSparseIndices {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.property("bufferView", &self.buffer_view);
+        if let Some(v) = self.byte_offset.as_ref() {
+            object.property("byteOffset", v);
+        }
+        object.property("componentType", &self.component_type);
+        if let Some(v) = self.extensions.as_ref() {
+            object.property("extensions", v);
+        }
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for AccessorSparseIndices {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1597,6 +2268,12 @@ impl<'a> Deserialize<'a> for AccessorSparseIndices {
 #[derive(Debug, Clone)]
 pub struct Extension {}
 
+impl Serialize for Extension {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut object = serializer.begin_object();
+        object.end_object();
+    }
+}
 impl<'a> Deserialize<'a> for Extension {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         deserializer.begin_object().then(|| {})?;
@@ -1619,6 +2296,15 @@ pub enum AccessorSparseIndicesComponentType {
     UnsignedInt,
 }
 
+impl Serialize for AccessorSparseIndicesComponentType {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::UnsignedByte => 5121.serialize(serializer),
+            Self::UnsignedShort => 5123.serialize(serializer),
+            Self::UnsignedInt => 5125.serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for AccessorSparseIndicesComponentType {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.i64()?;
@@ -1643,6 +2329,19 @@ pub enum AccessorType {
     Mat4,
 }
 
+impl Serialize for AccessorType {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::Scalar => "SCALAR".serialize(serializer),
+            Self::Vec2 => "VEC2".serialize(serializer),
+            Self::Vec3 => "VEC3".serialize(serializer),
+            Self::Vec4 => "VEC4".serialize(serializer),
+            Self::Mat2 => "MAT2".serialize(serializer),
+            Self::Mat3 => "MAT3".serialize(serializer),
+            Self::Mat4 => "MAT4".serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for AccessorType {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.string()?;
@@ -1670,6 +2369,18 @@ pub enum AccessorComponentType {
     Float,
 }
 
+impl Serialize for AccessorComponentType {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        match self {
+            Self::Byte => 5120.serialize(serializer),
+            Self::UnsignedByte => 5121.serialize(serializer),
+            Self::Short => 5122.serialize(serializer),
+            Self::UnsignedShort => 5123.serialize(serializer),
+            Self::UnsignedInt => 5125.serialize(serializer),
+            Self::Float => 5126.serialize(serializer),
+        }
+    }
+}
 impl<'a> Deserialize<'a> for AccessorComponentType {
     fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {
         let value = deserializer.i64()?;

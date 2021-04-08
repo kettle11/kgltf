@@ -4,11 +4,14 @@ use std::io::Read;
 use crate::GlTf;
 
 #[derive(Debug, Clone)]
-
+/// A GLTF with all of its data included within a buffer.
 pub struct GLB {
+    /// The GLTF data decoded from the Json embedded in the GLB.
     pub gltf: GlTf,
+    /// The version of the GLB file. This is different from the GLTF version.
     pub glb_version: u32,
-    // need to include the binary part here as well.
+    /// The binary data buffer that is reference from the GLTF.
+    pub binary_data: Option<Vec<u8>>,
 }
 
 #[derive(Debug)]
@@ -55,7 +58,23 @@ impl GLB {
             String::from_utf8(json_string_bytes).map_err(|_| GLBError::IncorrectFormatting)?;
         let gltf = GlTf::from_json(&json_string).ok_or(GLBError::InvalidJSON)?;
 
-        Ok(GLB { gltf, glb_version })
+        let mut binary_data = None;
+        if let Ok(binary_chunk_length) = reader.get_u32() {
+            let binary_chunk_type = reader.get_u32()?;
+            if binary_chunk_type != 0x004E4942 {
+                let mut binary_data_buffer = vec![0; binary_chunk_length as usize];
+                reader
+                    .read_exact(&mut binary_data_buffer)
+                    .map_err(GLBError::Io)?;
+                binary_data = Some(binary_data_buffer);
+            }
+        }
+
+        Ok(GLB {
+            gltf,
+            glb_version,
+            binary_data,
+        })
     }
 }
 

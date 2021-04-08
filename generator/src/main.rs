@@ -514,7 +514,7 @@ impl<'a> RustGenerator {
                             name: property_name,
                             json_name: property.name.clone(),
                             description: property.schema.description.clone(),
-                            optional: property.required,
+                            optional: !property.required,
                             property_type,
                         })
                     }
@@ -663,6 +663,91 @@ impl<'a> RustGenerator {
                     }
                     write!(output, "}}\n\n").unwrap();
 
+                    // Implement serialization for this type
+                    write!(output, "impl Serialize for {} {{\n", s.name).unwrap();
+                    write!(
+                        output,
+                        "    fn serialize<S: Serializer>(&self, serializer: &mut S) {{\n"
+                    )
+                    .unwrap();
+                    write!(
+                        output,
+                        "        let mut object = serializer.begin_object();\n"
+                    )
+                    .unwrap();
+                    for property in s.properties.iter() {
+                        if property.optional {
+                            match &property.property_type {
+                                // Only serialize if the Vec is not empty.
+                                RustType::Vec(_) => {
+                                    write!(
+                                        output,
+                                        "        if !self.{}.is_empty() {{\n",
+                                        property.name
+                                    )
+                                    .unwrap();
+                                    write!(
+                                        output,
+                                        "           object.property(\"{}\", &self.{});\n",
+                                        property.json_name, property.name
+                                    )
+                                    .unwrap();
+                                    write!(output, "        }}\n").unwrap();
+                                }
+                                // Only serialize if the option is not empty.
+                                RustType::Option(inner) => {
+                                    match &**inner {
+                                        // Only serialize if the Vec is not empty.
+                                        RustType::Vec(_) => {
+                                            write!(
+                                                output,
+                                                "        if !self.{}.is_empty() {{\n",
+                                                property.name
+                                            )
+                                            .unwrap();
+                                            write!(
+                                                output,
+                                                "           object.property(\"{}\", &self.{});\n",
+                                                property.json_name, property.name
+                                            )
+                                            .unwrap();
+                                            write!(output, "        }}\n").unwrap();
+                                        }
+                                        _ => {
+                                            write!(
+                                                output,
+                                                "        if let Some(v) = self.{}.as_ref() {{\n",
+                                                property.name
+                                            )
+                                            .unwrap();
+                                            write!(
+                                                output,
+                                                "           object.property(\"{}\", v);\n",
+                                                property.json_name
+                                            )
+                                            .unwrap();
+                                            write!(output, "        }}\n").unwrap();
+                                        }
+                                    }
+                                }
+                                _ => {
+                                    panic!("Unexpected optional type: {:?}", &property.name)
+                                }
+                            }
+                        } else {
+                            write!(
+                                output,
+                                "        object.property(\"{}\", &self.{});\n",
+                                property.json_name, property.name
+                            )
+                            .unwrap();
+                        }
+                    }
+                    write!(output, "        object.end_object();\n").unwrap();
+
+                    write!(output, "    }}\n").unwrap();
+                    write!(output, "}}\n").unwrap();
+
                     // Implement deserialization for this type.
                     write!(output, "impl<'a> Deserialize<'a> for {} {{\n", s.name).unwrap();
                     write!(output, "    fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {{\n").unwrap();
@@ -674,8 +759,7 @@ impl<'a> RustGenerator {
                     for property in s.properties.iter() {
                         write!(output, "        let mut {} = None;\n", property.name,).unwrap();
                     }
-                    // <{}>::deserialize(deserializer);\n
-                    //                             property.property_type.type_name()
+
                     write!(
                         output,
                         "\n        while let Some(property) = deserializer.has_property() {{\n",
@@ -779,6 +863,40 @@ impl<'a> RustGenerator {
                     }
                     write!(output, "}}\n\n").unwrap();
 
+                    // Implement serialization for this enum
+                    write!(output, "impl Serialize for {} {{\n", rust_enum.name).unwrap();
+                    write!(
+                        output,
+                        "    fn serialize<S: Serializer>(&self, serializer: &mut S) {{\n"
+                    )
+                    .unwrap();
+                    write!(output, "        match self {{\n").unwrap();
+                    for member in rust_enum.members.iter() {
+                        match &member.json_value {
+                            JsonEnumValue::Integer(i) => {
+                                write!(
+                                    output,
+                                    "            Self::{} => {:?}.serialize(serializer),\n",
+                                    member.name, i
+                                )
+                                .unwrap();
+                            }
+                            JsonEnumValue::String(s) => {
+                                write!(
+                                    output,
+                                    "            Self::{} => {:?}.serialize(serializer),\n",
+                                    member.name, s
+                                )
+                                .unwrap();
+                            }
+                        }
+                    }
+                    write!(output, "        }}\n").unwrap();
+
+                    write!(output, "    }}\n").unwrap();
+                    write!(output, "}}\n").unwrap();
+
+                    // Implement deserialization
                     write!(
                         output,
                         "impl<'a> Deserialize<'a> for {} {{\n",
