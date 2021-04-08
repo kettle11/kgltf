@@ -27,9 +27,9 @@ enum EnumValue {
 enum SchemaType {
     String,
     Integer {
-        minimum: Option<i32>,
-        maximum: Option<i32>,
-        multiple_of: Option<i32>,
+        minimum: Option<i64>,
+        maximum: Option<i64>,
+        multiple_of: Option<i64>,
     },
     Number {
         minimum: Option<f32>,
@@ -131,13 +131,13 @@ impl Parser {
                     }
                     let new_minimum = thing
                         .get("minimum")
-                        .map(|n| n.item.number().unwrap() as i32);
+                        .map(|n| n.item.number().unwrap() as i64);
                     let new_maximum = thing
                         .get("maximum")
-                        .map(|n| n.item.number().unwrap() as i32);
+                        .map(|n| n.item.number().unwrap() as i64);
                     let new_multiple_of = thing
                         .get("multipleOf")
-                        .map(|n| n.item.number().unwrap() as i32);
+                        .map(|n| n.item.number().unwrap() as i64);
 
                     match &mut schema.schema_type {
                         SchemaType::Integer {
@@ -414,7 +414,7 @@ struct RustEnum {
 #[derive(Clone)]
 enum RustType {
     String,
-    I32,
+    USIZE,
     Boolean,
     F32,
     Struct(RustStruct),
@@ -431,7 +431,7 @@ impl RustType {
     fn type_name(&self) -> String {
         match self {
             RustType::String => "String".to_string(),
-            RustType::I32 => "i32".to_string(),
+            RustType::USIZE => "usize".to_string(),
             RustType::Boolean => "bool".to_string(),
             RustType::F32 => "f32".to_string(),
             RustType::Struct(s) => s.name.clone(),
@@ -474,7 +474,7 @@ impl<'a> RustGenerator {
         match &schema.schema_type {
             SchemaType::String => RustType::String,
             SchemaType::Boolean => RustType::Boolean,
-            SchemaType::Integer { .. } => RustType::I32,
+            SchemaType::Integer { .. } => RustType::USIZE,
             SchemaType::Number { .. } => RustType::F32,
             SchemaType::Object {
                 properties,
@@ -495,8 +495,13 @@ impl<'a> RustGenerator {
                         enum_name.to_camel_case();
                         let property_type =
                             self.rust_type_from_schema(&&enum_name, &property.schema);
+
+                        // If a property is not required remap it to an `Option`, unless
                         let property_type = if !property.required {
-                            RustType::Option(Box::new(property_type))
+                            match property_type {
+                                //  RustType::Vec(..) | RustType::HashMap(..) => property_type,
+                                _ => RustType::Option(Box::new(property_type)),
+                            }
                         } else {
                             property_type
                         };
@@ -530,7 +535,7 @@ impl<'a> RustGenerator {
                         match p.schema_type {
                             SchemaType::Integer { .. } => RustType::HashMap(
                                 Box::new(RustType::String),
-                                Box::new(RustType::I32),
+                                Box::new(RustType::USIZE),
                             ),
                             SchemaType::Object { .. } => RustType::HashMap(
                                 Box::new(RustType::String),
@@ -628,6 +633,26 @@ impl<'a> RustGenerator {
                         if let Some(description) = &property.description {
                             write!(output, "    /// {}\n", description).unwrap();
                         }
+                        match &property.property_type {
+                            RustType::Option(r) => {
+                                match &**r {
+                                    // In this case we won't use an option, we'll just leave the data structure empty.
+                                    RustType::Vec(..) | RustType::HashMap(..) => {
+                                        write!(
+                                            output,
+                                            "    pub {}: {},\n",
+                                            property.name,
+                                            r.type_name()
+                                        )
+                                        .unwrap();
+                                        continue;
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            _ => {}
+                        };
+                        // Default case
                         write!(
                             output,
                             "    pub {}: {},\n",
@@ -692,6 +717,28 @@ impl<'a> RustGenerator {
                     for property in s.properties.iter() {
                         match &property.property_type {
                             RustType::Option(r) => {
+                                match &**r {
+                                    // In this case we won't use an option, we'll just leave the data structure empty.
+                                    RustType::Vec(..) => {
+                                        write!(
+                                            output,
+                                            "            {}: {}.unwrap_or_else(|| Vec::new()),\n",
+                                            property.name, property.name
+                                        )
+                                        .unwrap();
+                                        continue;
+                                    }
+                                    RustType::HashMap(..) => {
+                                        write!(
+                                            output,
+                                            "            {}: {}.unwrap_or_else(|| HashMap::new()),\n",
+                                            property.name, property.name,
+                                        )
+                                        .unwrap();
+                                        continue;
+                                    }
+                                    _ => {}
+                                }
                                 // The same but leave off the comma
                                 write!(
                                     output,
