@@ -1,5 +1,7 @@
 **WORK IN PROGRESS** 
 
+# kgltf [![Crates.io](https://img.shields.io/crates/v/kgltf.svg)](https://crates.io/crates/kgltf)
+
 `kgltf` is a minimalist Rust crate for loading glTF files.
 
 [glTF](https://www.khronos.org/gltf/) is an open standard for transmitting and loading 3D scenes and models.
