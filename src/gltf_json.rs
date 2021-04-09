@@ -1,4 +1,4 @@
-use kjson::*;
+use kserde::*;
 
 use std::collections::HashMap;
 

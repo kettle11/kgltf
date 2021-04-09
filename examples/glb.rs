@@ -1,5 +1,4 @@
 use kgltf::*;
-use kjson::*;
 
 fn main() {
     let bytes = std::fs::read("models/fox.glb").unwrap();

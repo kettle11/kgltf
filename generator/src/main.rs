@@ -1,7 +1,7 @@
 //! The code in this file is inefficient and a bit spaghetti-ish, but
 //! it only has to run to generate the library.
 
-use kjson::*;
+use kserde::*;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as FmtWrite;
 use std::path::Path;
@@ -614,7 +614,7 @@ impl<'a> RustGenerator {
         self.generate_struct("".to_string(), schema);
 
         let mut output = String::new();
-        write!(output, "use kjson::*;\n\n").unwrap();
+        write!(output, "use kserde::*;\n\n").unwrap();
         write!(output, "use std::collections::HashMap;\n\n").unwrap();
 
         // Reverse because we want to the top level structure at the top of the file
@@ -962,7 +962,7 @@ impl<'a> RustGenerator {
 
 fn main() {
     let source = std::fs::read_to_string("schema/glTF.schema.json").unwrap();
-    let json = kjson::Thing::from_json(&source).expect("Could not parse JSON");
+    let json = kserde::Thing::from_json(&source).expect("Could not parse JSON");
     let mut parser = Parser::new();
     let schema = parser.parse_schema(&json);
 
