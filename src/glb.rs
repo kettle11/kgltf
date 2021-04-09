@@ -4,13 +4,13 @@ use std::io::Read;
 use crate::GlTf;
 
 #[derive(Debug, Clone)]
-/// A GLTF with all of its data included within a buffer.
+/// A glTF with all of its data included within a buffer.
 pub struct GLB {
     /// The GLTF data decoded from the Json embedded in the GLB.
     pub gltf: GlTf,
-    /// The version of the GLB file. This is different from the GLTF version.
+    /// The version of the GLB file. This is different from the glTF version.
     pub glb_version: u32,
-    /// The binary data buffer that is reference from the GLTF.
+    /// The binary data buffer that is referenced from the glTF.
     pub binary_data: Option<Vec<u8>>,
 }
 
