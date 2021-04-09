@@ -1,17 +1,17 @@
 use kserde::*;
-use std::io::Read;
+use std::{borrow::Cow, io::Read};
 
 use crate::GlTf;
 
 #[derive(Debug, Clone)]
 /// A glTF with all of its data included within a buffer.
-pub struct GLB {
+pub struct GLB<'a> {
     /// The GLTF data decoded from the Json embedded in the GLB.
     pub gltf: GlTf,
     /// The version of the GLB file. This is different from the glTF version.
     pub glb_version: u32,
     /// The binary data buffer that is referenced from the glTF.
-    pub binary_data: Option<Vec<u8>>,
+    pub binary_data: Option<Cow<'a, [u8]>>,
 }
 
 #[derive(Debug)]
@@ -25,8 +25,10 @@ pub enum GLBError {
     InvalidJSON,
 }
 
-impl GLB {
-    pub fn from_bytes(data: &[u8]) -> Result<Self, GLBError> {
+impl<'a> GLB<'a> {
+    pub fn from_bytes(data: &'a [u8]) -> Result<Self, GLBError> {
+        // This function extra copies.
+        // That could be improved in the future.
         let reader = std::io::BufReader::new(data);
         Self::from_reader(reader)
     }
@@ -66,7 +68,7 @@ impl GLB {
                 reader
                     .read_exact(&mut binary_data_buffer)
                     .map_err(GLBError::Io)?;
-                binary_data = Some(binary_data_buffer);
+                binary_data = Some(binary_data_buffer.into());
             }
         }
 
