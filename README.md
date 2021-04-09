@@ -1,7 +1,7 @@
 **WORK IN PROGRESS** 
 
-# kgltf [![Crates.io](https://img.shields.io/crates/v/kgltf.svg)](https://crates.io/crates/kgltf)
-
+# kgltf
+[![Crates.io](https://img.shields.io/crates/v/kgltf.svg)](https://crates.io/crates/kgltf)
 [![Docs.rs](https://docs.rs/kgltf/badge.svg)](https://docs.rs/kgltf)
 
 
