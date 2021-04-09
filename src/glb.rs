@@ -39,7 +39,7 @@ impl GLB {
         }
 
         let glb_version = reader.get_u32()?;
-        let file_length = reader.get_u32()?;
+        let _file_length = reader.get_u32()?;
 
         // JSON Chunk
         let json_chunk_length = reader.get_u32()?;

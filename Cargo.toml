@@ -8,4 +8,5 @@ exclude = ["models/*", "generator/*"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+license = "Zlib OR Apache-2.0 OR MIT"
 kjson = {path = "../kjson"}

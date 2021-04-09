@@ -2270,7 +2270,7 @@ pub struct Extension {}
 
 impl Serialize for Extension {
     fn serialize<S: Serializer>(&self, serializer: &mut S) {
-        let mut object = serializer.begin_object();
+        let object = serializer.begin_object();
         object.end_object();
     }
 }

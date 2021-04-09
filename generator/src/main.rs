@@ -5,7 +5,6 @@ use kjson::*;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as FmtWrite;
 use std::path::Path;
-use std::rc::Rc;
 
 #[derive(Debug)]
 struct Property {
@@ -563,7 +562,7 @@ impl<'a> RustGenerator {
             }
             SchemaType::Any => {
                 if schema.any_of.len() > 0 {
-                    let name = enum_name.to_camel_case();
+                    // let name = enum_name.to_camel_case();
                     let json_name = schema.title.clone();
                     let description = schema.description.clone().unwrap();
 
@@ -967,23 +966,7 @@ fn main() {
     let mut parser = Parser::new();
     let schema = parser.parse_schema(&json);
 
-    //let mut output = "".to_string();
-
-    /*
-    let mut generated = HashSet::new();
-    let mut schemas_to_generate = Vec::new();
-
-    schema_to_gltf_struct(
-        &schema,
-        &mut output,
-        &mut generated,
-        &mut schemas_to_generate,
-    );
-    println!("{}", output);
-    */
-
     let mut rust_generator = RustGenerator::new();
-    // rust_generator.generate(&schema);
-    println!("{}", rust_generator.generate(&schema));
-    // println!("{:#?}", schema);
+    let result = rust_generator.generate(&schema);
+    std::fs::write("../src/gltf_json.rs", result).unwrap();
 }
