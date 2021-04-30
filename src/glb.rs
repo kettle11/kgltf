@@ -63,7 +63,7 @@ impl<'a> GLB<'a> {
         let mut binary_data = None;
         if let Ok(binary_chunk_length) = reader.get_u32() {
             let binary_chunk_type = reader.get_u32()?;
-            if binary_chunk_type != 0x004E4942 {
+            if binary_chunk_type == 0x004E4942 {
                 let mut binary_data_buffer = vec![0; binary_chunk_length as usize];
                 reader
                     .read_exact(&mut binary_data_buffer)
