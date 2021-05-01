@@ -1,0 +1,175 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'kgltf'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=kgltf"
+                ],
+                "filter": {
+                    "name": "kgltf",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'glb'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=glb",
+                    "--package=kgltf"
+                ],
+                "filter": {
+                    "name": "glb",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'glb'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=glb",
+                    "--package=kgltf"
+                ],
+                "filter": {
+                    "name": "glb",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'hello'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=hello",
+                    "--package=kgltf"
+                ],
+                "filter": {
+                    "name": "hello",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'hello'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=hello",
+                    "--package=kgltf"
+                ],
+                "filter": {
+                    "name": "hello",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'box'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=box",
+                    "--package=kgltf"
+                ],
+                "filter": {
+                    "name": "box",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'box'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=box",
+                    "--package=kgltf"
+                ],
+                "filter": {
+                    "name": "box",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'roundtrip'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=roundtrip",
+                    "--package=kgltf"
+                ],
+                "filter": {
+                    "name": "roundtrip",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'roundtrip'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=roundtrip",
+                    "--package=kgltf"
+                ],
+                "filter": {
+                    "name": "roundtrip",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

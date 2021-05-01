@@ -241,10 +241,6 @@ impl Parser {
                                 new_properties.sort_by_key(|(_, i)| i.index);
 
                                 for (key, value) in new_properties {
-                                    // Temporarily skip extras
-                                    if key == "extras" {
-                                        continue;
-                                    }
                                     let property = Property {
                                         name: key.to_string(),
                                         required: required.contains(key),
@@ -423,6 +419,7 @@ enum RustType {
     Option(Box<RustType>), // Need an enum variant.
     //Enum { name: String, members: Vec<String> },
     Enum(RustEnum),
+    KSerdeOwnedThing,
     Unimplemented,
 }
 
@@ -451,6 +448,7 @@ impl RustType {
                 )
             }
             RustType::Enum(s) => s.name.clone(),
+            RustType::KSerdeOwnedThing => "ThingOwned".to_string(),
             RustType::Unimplemented => "UNIMPLEMENTED".to_string(),
         }
     }
@@ -481,53 +479,70 @@ impl<'a> RustGenerator {
                 ..
             } => {
                 if let Some(title) = schema.title.as_ref() {
+                    if title == "Extension" {
+                        println!("HI THERE");
+                    }
                     let name = title.to_camel_case();
                     let json_name = schema.title.clone();
                     // let name = json_name.to_camel_case();
                     let description = schema.description.clone().unwrap();
                     let mut struct_properties = Vec::new();
-                    for property in properties {
-                        let mut enum_name = name.clone();
-                        enum_name.push_str(&property.name.to_camel_case());
 
-                        let mut property_name = property.name.to_snake_case();
-                        enum_name.to_camel_case();
-                        let property_type =
-                            self.rust_type_from_schema(&&enum_name, &property.schema);
-
-                        // If a property is not required remap it to an `Option`, unless
-                        let property_type = if !property.required {
-                            match property_type {
-                                //  RustType::Vec(..) | RustType::HashMap(..) => property_type,
-                                _ => RustType::Option(Box::new(property_type)),
-                            }
-                        } else {
-                            property_type
-                        };
-
-                        if property_name == "type" {
-                            property_name.push('_');
+                    if let Some(additional_property) = additional_properties.get(0) {
+                        match additional_property.schema_type {
+                            SchemaType::Integer { .. } => RustType::HashMap(
+                                Box::new(RustType::String),
+                                Box::new(RustType::USIZE),
+                            ),
+                            SchemaType::Object { .. } => RustType::HashMap(
+                                Box::new(RustType::String),
+                                Box::new(RustType::KSerdeOwnedThing),
+                            ),
+                            _ => panic!("Unsupported schema type for HashMap"),
                         }
+                    } else {
+                        for property in properties {
+                            let mut enum_name = name.clone();
+                            enum_name.push_str(&property.name.to_camel_case());
 
-                        struct_properties.push(RustStructProperty {
-                            name: property_name,
-                            json_name: property.name.clone(),
-                            description: property.schema.description.clone(),
-                            optional: !property.required,
-                            property_type,
-                        })
-                    }
+                            let mut property_name = property.name.to_snake_case();
+                            enum_name.to_camel_case();
+                            let property_type =
+                                self.rust_type_from_schema(&&enum_name, &property.schema);
 
-                    let rust_type = RustType::Struct(RustStruct {
-                        name: name.clone(),
-                        json_name,
-                        description,
-                        properties: struct_properties,
-                    });
-                    if self.rust_types_set.insert(name.clone()) {
-                        self.rust_types.push((name, rust_type.clone()));
+                            // If a property is not required remap it to an `Option`, unless
+                            let property_type = if !property.required {
+                                match property_type {
+                                    //  RustType::Vec(..) | RustType::HashMap(..) => property_type,
+                                    _ => RustType::Option(Box::new(property_type)),
+                                }
+                            } else {
+                                property_type
+                            };
+
+                            if property_name == "type" {
+                                property_name.push('_');
+                            }
+
+                            struct_properties.push(RustStructProperty {
+                                name: property_name,
+                                json_name: property.name.clone(),
+                                description: property.schema.description.clone(),
+                                optional: !property.required,
+                                property_type,
+                            })
+                        }
+                        let rust_type = RustType::Struct(RustStruct {
+                            name: name.clone(),
+                            json_name,
+                            description,
+                            properties: struct_properties,
+                        });
+                        if self.rust_types_set.insert(name.clone()) {
+                            self.rust_types.push((name, rust_type.clone()));
+                        }
+                        rust_type
                     }
-                    rust_type
                 } else {
                     // This is probably just a HashMap
                     if let Some(p) = additional_properties.get(0) {
@@ -538,7 +553,7 @@ impl<'a> RustGenerator {
                             ),
                             SchemaType::Object { .. } => RustType::HashMap(
                                 Box::new(RustType::String),
-                                Box::new(RustType::Unimplemented),
+                                Box::new(RustType::KSerdeOwnedThing),
                             ),
                             _ => panic!("Unsupported schema type for HashMap"),
                         }
@@ -599,7 +614,9 @@ impl<'a> RustGenerator {
                     }
                     rust_type
                 } else {
-                    RustType::Unimplemented
+                    // This is an extras object.
+                    //println!("UNIMPLEMENTED HERE: {:#?}", schema.title);
+                    RustType::KSerdeOwnedThing
                 }
             }
             _ => todo!(),
@@ -698,6 +715,21 @@ impl<'a> RustGenerator {
                                     match &**inner {
                                         // Only serialize if the Vec is not empty.
                                         RustType::Vec(_) => {
+                                            write!(
+                                                output,
+                                                "        if !self.{}.is_empty() {{\n",
+                                                property.name
+                                            )
+                                            .unwrap();
+                                            write!(
+                                                output,
+                                                "           object.property(\"{}\", &self.{});\n",
+                                                property.json_name, property.name
+                                            )
+                                            .unwrap();
+                                            write!(output, "        }}\n").unwrap();
+                                        }
+                                        RustType::HashMap(..) => {
                                             write!(
                                                 output,
                                                 "        if !self.{}.is_empty() {{\n",
