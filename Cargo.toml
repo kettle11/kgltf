@@ -10,4 +10,4 @@ categories = ["rendering::data-formats", "game-development"]
 description = "Load and save glTF files."
 
 [dependencies]
-kserde =  "0.1.0"
+kserde =  {path = "../kserde"}

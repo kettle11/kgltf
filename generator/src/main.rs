@@ -1,4 +1,4 @@
-//! The code in this file is inefficient and a bit spaghetti-ish, but
+//! The code in this file is inefficient and quite spaghetti-ish, but
 //! it only has to run to generate the library.
 
 use kserde::*;
@@ -11,7 +11,8 @@ struct Property {
     name: String,
     required: bool,
     schema: Schema,
-    dependencies: Vec<String>,
+    /// If these other values are defined, this cannot be defined.
+    incompatible_with: Vec<String>,
 }
 
 // For now only string and number enum values are supported.
@@ -59,7 +60,7 @@ struct Schema {
     schema_type: SchemaType,
     title: Option<String>,
     description: Option<String>,
-    default: Option<()>,
+    default: Option<ThingOwned>,
     any_of: Vec<Schema>,
     one_of: Vec<Schema>,
     /// Only filled out if this is an enum
@@ -93,6 +94,10 @@ impl Parser {
             .map(|s| s.item.string().unwrap().to_string());
         if schema.title.is_none() {
             schema.title = title;
+        }
+
+        if let Some(default) = thing.get("default") {
+            schema.default = Some(default.item.to_owned());
         }
 
         if schema.description.is_none() {
@@ -245,7 +250,7 @@ impl Parser {
                                         name: key.to_string(),
                                         required: required.contains(key),
                                         schema: self.parse_schema(&value.item),
-                                        dependencies: Vec::new(), // Todo
+                                        incompatible_with: Vec::new(),
                                     };
 
                                     if let Some(index) = properties_by_name.get(&**key) {
@@ -264,6 +269,49 @@ impl Parser {
                                 }
                             }
 
+                            if let Some(not) = thing.get("not") {
+                                let object = not.item.object().unwrap();
+                                if let Some(required) = object.get("required") {
+                                    let required = required.item.array().unwrap();
+                                    let first_required = required[0].string().unwrap().to_string();
+                                    let second_required = required[1].string().unwrap().to_string();
+                                    properties[*properties_by_name.get(&first_required).unwrap()]
+                                        .incompatible_with
+                                        .push(second_required.to_string());
+                                    properties[*properties_by_name.get(&second_required).unwrap()]
+                                        .incompatible_with
+                                        .push(first_required.to_string());
+                                    // These items will be pairs.
+                                }
+
+                                if let Some(any_of) = object.get("anyOf") {
+                                    let any_of = any_of.item.array().unwrap();
+                                    for object in any_of {
+                                        // This code is mostly copy-pasted from above
+                                        let required =
+                                            object.object().unwrap().get("required").unwrap();
+                                        let required = required.item.array().unwrap();
+                                        let first_required =
+                                            required[0].string().unwrap().to_string();
+                                        let second_required =
+                                            required[1].string().unwrap().to_string();
+                                        properties
+                                            [*properties_by_name.get(&first_required).unwrap()]
+                                        .incompatible_with
+                                        .push(second_required.to_string());
+                                        properties
+                                            [*properties_by_name.get(&second_required).unwrap()]
+                                        .incompatible_with
+                                        .push(first_required.to_string());
+
+                                        println!(
+                                            "INCOMPATIBLE WITH: {}, {}",
+                                            first_required, second_required
+                                        );
+                                        // These items will be pairs.
+                                    }
+                                }
+                            }
                             // Todo: Additional properties
                         }
                         _ => unreachable!(),
@@ -356,6 +404,7 @@ impl Parser {
         };
 
         self.extend_from_schema(&mut schema, thing);
+
         schema
     }
 }
@@ -375,6 +424,8 @@ struct RustStructProperty {
     json_name: String,
     property_type: RustType,
     description: Option<String>,
+    default_value: Option<ThingOwned>,
+    incompatible_with: Vec<String>,
     optional: bool,
 }
 
@@ -397,6 +448,7 @@ struct EnumMember {
     name: String,
     json_value: JsonEnumValue,
     description: Option<String>,
+    value: Option<u32>,
 }
 #[derive(Clone)]
 struct RustEnum {
@@ -479,9 +531,6 @@ impl<'a> RustGenerator {
                 ..
             } => {
                 if let Some(title) = schema.title.as_ref() {
-                    if title == "Extension" {
-                        println!("HI THERE");
-                    }
                     let name = title.to_camel_case();
                     let json_name = schema.title.clone();
                     // let name = json_name.to_camel_case();
@@ -511,7 +560,10 @@ impl<'a> RustGenerator {
                                 self.rust_type_from_schema(&&enum_name, &property.schema);
 
                             // If a property is not required remap it to an `Option`, unless
-                            let property_type = if !property.required {
+                            let property_type = if !property.required
+                                && (property.schema.default.is_none()
+                                    || property.incompatible_with.len() > 0)
+                            {
                                 match property_type {
                                     //  RustType::Vec(..) | RustType::HashMap(..) => property_type,
                                     _ => RustType::Option(Box::new(property_type)),
@@ -529,6 +581,8 @@ impl<'a> RustGenerator {
                                 json_name: property.name.clone(),
                                 description: property.schema.description.clone(),
                                 optional: !property.required,
+                                default_value: property.schema.default.clone(),
+                                incompatible_with: property.incompatible_with.clone(),
                                 property_type,
                             })
                         }
@@ -590,11 +644,13 @@ impl<'a> RustGenerator {
                                         name: value.description.clone().unwrap().to_camel_case(),
                                         description: None,
                                         json_value: JsonEnumValue::Integer(*n as i32),
+                                        value: Some(*n as u32),
                                     },
                                     EnumValue::String(s) => EnumMember {
                                         name: s.clone().to_camel_case(),
                                         description: value.description.clone(),
                                         json_value: JsonEnumValue::String(s.clone()),
+                                        value: None,
                                     },
                                 });
                             }
@@ -692,7 +748,10 @@ impl<'a> RustGenerator {
                     )
                     .unwrap();
                     for property in s.properties.iter() {
-                        if property.optional {
+                        if property.optional
+                            && (property.default_value.is_none()
+                                && property.incompatible_with.len() > 0)
+                        {
                             match &property.property_type {
                                 // Only serialize if the Vec is not empty.
                                 RustType::Vec(_) => {
@@ -806,7 +865,7 @@ impl<'a> RustGenerator {
                                 RustType::Option(r) => {
                                     write!(
                                         output,
-                                        " {} = <{}>::deserialize(deserializer),\n",
+                                        " {} = Some(<{}>::deserialize(deserializer)?),\n",
                                         property.name,
                                         r.type_name()
                                     )
@@ -815,7 +874,7 @@ impl<'a> RustGenerator {
                                 _ => {
                                     write!(
                                         output,
-                                        " {} = <{}>::deserialize(deserializer),\n",
+                                        " {} = Some(<{}>::deserialize(deserializer)?),\n",
                                         property.name,
                                         property.property_type.type_name()
                                     )
@@ -830,8 +889,10 @@ impl<'a> RustGenerator {
 
                     write!(output, "        Some(Self {{\n").unwrap();
                     for property in s.properties.iter() {
-                        match &property.property_type {
+                        let mut optional = false;
+                        let mut value = match &property.property_type {
                             RustType::Option(r) => {
+                                optional = true;
                                 match &**r {
                                     // In this case we won't use an option, we'll just leave the data structure empty.
                                     RustType::Vec(..) => {
@@ -852,24 +913,129 @@ impl<'a> RustGenerator {
                                         .unwrap();
                                         continue;
                                     }
-                                    _ => {}
+                                    _ => property.name.clone(),
                                 }
-                                // The same but leave off the comma
-                                write!(
-                                    output,
-                                    "            {}: {},\n",
-                                    property.name, property.name
-                                )
-                                .unwrap();
                             }
-                            _ => {
-                                write!(
-                                    output,
-                                    "            {}: {}?,\n",
-                                    property.name, property.name
-                                )
-                                .unwrap();
+                            _ => property.name.clone(),
+                        };
+
+                        let mut cloned = false;
+                        if let Some(default_value) = &property.default_value {
+                            value = format!(
+                                "{}{}.map_or_else(|| {}, |m| m)",
+                                value,
+                                if property.incompatible_with.len() > 0 {
+                                    cloned = true;
+                                    ".clone()"
+                                } else {
+                                    ""
+                                },
+                                match default_value {
+                                    ThingOwned::String(s) => {
+                                        match &property.property_type {
+                                            // Find an enum member with the same name
+                                            RustType::Enum(e) => {
+                                                let mut result = "".to_string();
+                                                for member in &e.members {
+                                                    match &member.json_value {
+                                                        JsonEnumValue::String(v) => {
+                                                            if v == s {
+                                                                result = format!(
+                                                                    "{}::{}",
+                                                                    e.name, member.name
+                                                                );
+                                                                break;
+                                                            }
+                                                        }
+                                                        _ => unimplemented!(),
+                                                    }
+                                                }
+                                                result
+                                            }
+                                            _ => s.clone(),
+                                        }
+                                    }
+                                    ThingOwned::Bool(b) => b.to_string(),
+                                    ThingOwned::Number(n) => {
+                                        match &property.property_type {
+                                            RustType::USIZE => {
+                                                format!("{}usize", n.to_string())
+                                            }
+                                            RustType::F32 => {
+                                                format!("{}f32", n.to_string())
+                                            }
+                                            RustType::Enum(e) => {
+                                                // Find the matching enum value
+                                                let mut s = "".to_string();
+                                                for member in &e.members {
+                                                    if *n as u32 == member.value.unwrap() {
+                                                        s = format!("{}::{}", e.name, member.name);
+                                                        break;
+                                                    }
+                                                }
+                                                s
+                                            }
+                                            _ => unreachable!(),
+                                        }
+                                    }
+                                    ThingOwned::Object(_) => unimplemented!(),
+                                    ThingOwned::Array(a) => {
+                                        let mut s = "[".to_string();
+                                        for v in a {
+                                            match v {
+                                                ThingOwned::Number(n) => {
+                                                    s.push_str(&format!("{}f32, ", n.to_string()))
+                                                }
+                                                _ => s.push_str(&format!("{}, ", &v.to_json())),
+                                            }
+                                        }
+                                        s.push_str("]");
+                                        s
+                                    }
+                                    ThingOwned::Null => {
+                                        unimplemented!()
+                                    }
+                                }
+                            );
+
+                            if optional {
+                                value = format!("Some({})", value)
                             }
+                        }
+
+                        if !optional && property.default_value.is_none() {
+                            value += "?"
+                        }
+
+                        if property.incompatible_with.len() > 0 {
+                            let mut condition = "".to_string();
+                            let mut previous = false;
+
+                            // Set this property to null if incompatible properties exist on the object.
+                            // This generated code isn't entirely correct as it uses the JSON name, not the
+                            // Rust name, but that's ok for now as the only cases in the Schema end up with the same name presently.
+                            for p in &property.incompatible_with {
+                                if previous {
+                                    condition += " && ";
+                                }
+                                previous = true;
+                                condition += p;
+                                condition += ".is_none()";
+                            }
+
+                            // The same but leave off the comma
+                            write!(
+                                output,
+                                "            {}: if {} {{{}{}}} else {{ None }},\n",
+                                property.name,
+                                condition,
+                                value,
+                                if cloned { "" } else { ".clone()" }
+                            )
+                            .unwrap();
+                        } else {
+                            // The same but leave off the comma
+                            write!(output, "            {}: {},\n", property.name, value).unwrap();
                         }
                     }
                     write!(output, "        }})\n").unwrap();
@@ -890,7 +1056,12 @@ impl<'a> RustGenerator {
                         if let Some(description) = &member.description {
                             write!(output, "    /// {}\n", description).unwrap();
                         }
-                        write!(output, "    {},\n", member.name,).unwrap();
+
+                        if let Some(value) = member.value {
+                            write!(output, "    {} = {:?},\n", member.name, value).unwrap();
+                        } else {
+                            write!(output, "    {},\n", member.name,).unwrap();
+                        }
                     }
                     write!(output, "}}\n\n").unwrap();
 
