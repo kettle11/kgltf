@@ -21,9 +21,9 @@ The current version is a first draft.
 
 ---
 
-`kgltf` is *not* a seamless solution for loading 3D models / scenes. This crate closely matches the specification. This design makes it very simple and flexible, but you'll have additional code to use it within a codebase.
+`kgltf` is *not* a seamless solution for loading 3D models / scenes. This crate closely matches the specification. This design makes it very simple and flexible, but you'll have to write additional code to use it within a codebase.
 
-`kgltf` is also very new, it's barely tested and everything is subject to change.
+`kgltf` is also very new, it's barely tested and everything is subject to change. If you're looking for more robust Rust-only glTF loader, try the [`gltf` crate](https://github.com/gltf-rs/gltf). 
 
 ---
 
