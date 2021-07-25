@@ -736,17 +736,14 @@ impl<'a> RustGenerator {
                     write!(output, "}}\n\n").unwrap();
 
                     // Implement serialization for this type
-                    write!(output, "impl Serialize for {} {{\n", s.name).unwrap();
                     write!(
                         output,
-                        "    fn serialize<S: Serializer>(&self, serializer: &mut S) {{\n"
+                        "impl<S: Serializer> Serialize<S> for {} {{\n",
+                        s.name
                     )
                     .unwrap();
-                    write!(
-                        output,
-                        "        let mut object = serializer.begin_object();\n"
-                    )
-                    .unwrap();
+                    write!(output, "    fn serialize(&self, serializer: &mut S) {{\n").unwrap();
+                    write!(output, "        serializer.begin_object();\n").unwrap();
                     for property in s.properties.iter() {
                         if property.optional
                             && (property.default_value.is_none()
@@ -763,7 +760,7 @@ impl<'a> RustGenerator {
                                     .unwrap();
                                     write!(
                                         output,
-                                        "           object.property(\"{}\", &self.{});\n",
+                                        "           serializer.property(\"{}\", &self.{});\n",
                                         property.json_name, property.name
                                     )
                                     .unwrap();
@@ -782,7 +779,7 @@ impl<'a> RustGenerator {
                                             .unwrap();
                                             write!(
                                                 output,
-                                                "           object.property(\"{}\", &self.{});\n",
+                                                "           serializer.property(\"{}\", &self.{});\n",
                                                 property.json_name, property.name
                                             )
                                             .unwrap();
@@ -797,7 +794,7 @@ impl<'a> RustGenerator {
                                             .unwrap();
                                             write!(
                                                 output,
-                                                "           object.property(\"{}\", &self.{});\n",
+                                                "           serializer.property(\"{}\", &self.{});\n",
                                                 property.json_name, property.name
                                             )
                                             .unwrap();
@@ -812,7 +809,7 @@ impl<'a> RustGenerator {
                                             .unwrap();
                                             write!(
                                                 output,
-                                                "           object.property(\"{}\", v);\n",
+                                                "           serializer.property(\"{}\", v);\n",
                                                 property.json_name
                                             )
                                             .unwrap();
@@ -827,20 +824,29 @@ impl<'a> RustGenerator {
                         } else {
                             write!(
                                 output,
-                                "        object.property(\"{}\", &self.{});\n",
+                                "        serializer.property(\"{}\", &self.{});\n",
                                 property.json_name, property.name
                             )
                             .unwrap();
                         }
                     }
-                    write!(output, "        object.end_object();\n").unwrap();
+                    write!(output, "        serializer.end_object();\n").unwrap();
 
                     write!(output, "    }}\n").unwrap();
                     write!(output, "}}\n").unwrap();
 
                     // Implement deserialization for this type.
-                    write!(output, "impl<'a> Deserialize<'a> for {} {{\n", s.name).unwrap();
-                    write!(output, "    fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {{\n").unwrap();
+                    write!(
+                        output,
+                        "impl<'a, D: Deserializer<'a>> Deserialize<'a, D> for {} {{\n",
+                        s.name
+                    )
+                    .unwrap();
+                    write!(
+                        output,
+                        "    fn deserialize(deserializer: &mut D) -> Option<Self> {{\n"
+                    )
+                    .unwrap();
                     write!(
                         output,
                         "        deserializer.begin_object().then(|| {{}})?;\n"
@@ -1066,12 +1072,13 @@ impl<'a> RustGenerator {
                     write!(output, "}}\n\n").unwrap();
 
                     // Implement serialization for this enum
-                    write!(output, "impl Serialize for {} {{\n", rust_enum.name).unwrap();
                     write!(
                         output,
-                        "    fn serialize<S: Serializer>(&self, serializer: &mut S) {{\n"
+                        "impl<S: Serializer> Serialize<S> for {} {{\n",
+                        rust_enum.name
                     )
                     .unwrap();
+                    write!(output, "    fn serialize(&self, serializer: &mut S) {{\n").unwrap();
                     write!(output, "        match self {{\n").unwrap();
                     for member in rust_enum.members.iter() {
                         match &member.json_value {
@@ -1101,12 +1108,16 @@ impl<'a> RustGenerator {
                     // Implement deserialization
                     write!(
                         output,
-                        "impl<'a> Deserialize<'a> for {} {{\n",
+                        "impl<'a, D: Deserializer<'a>> Deserialize<'a, D> for {} {{\n",
                         rust_enum.name
                     )
                     .unwrap();
                     {
-                        write!(output, "    fn deserialize<D: Deserializer<'a>>(deserializer: &mut D) -> Option<Self> {{\n").unwrap();
+                        write!(
+                            output,
+                            "    fn deserialize(deserializer: &mut D) -> Option<Self> {{\n"
+                        )
+                        .unwrap();
 
                         let enum_type = match &rust_enum.members[0].json_value {
                             JsonEnumValue::String(_) => {
